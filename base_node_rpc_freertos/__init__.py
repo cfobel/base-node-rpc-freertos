@@ -2,6 +2,9 @@ from collections import OrderedDict
 import warnings
 
 from path_helpers import path
+from ._version import get_versions
+__version__ = get_versions()['version']
+del get_versions
 try:
     from .proxy import Proxy, I2cProxy, SerialProxy
 except (ImportError, TypeError), exception:

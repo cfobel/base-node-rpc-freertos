@@ -6,3 +6,5 @@ include paver-minilib.zip
 include setup.py
 recursive-include hv_switching_board *
 prune *.pyc
+include versioneer.py
+include base_node_rpc_freertos/_version.py

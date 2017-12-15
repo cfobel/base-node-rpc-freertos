@@ -6,11 +6,11 @@ import sys
 from paver.easy import task, needs, path, sh, options
 from paver.setuputils import install_distutils_tasks
 try:
-    from base_node_rpc.pavement_base import *
+    from base_node_rpc.pavement_base import *  # base-node-rpc Paver tasks
 except ImportError:
     pass
 import platformio_helpers as pioh
-import platformio_helpers.develop
+import platformio_helpers.develop  # platformio Paver tasks
 
 # Make standard `setuptools.command` tasks available (e.g., `sdist`).
 install_distutils_tasks()
@@ -18,15 +18,11 @@ install_distutils_tasks()
 # add the current directory as the first listing on the python path
 # so that we import the correct version.py
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
-import version
-# Add package directory to Python path. This enables the use of
-# `base_node_rpc_freertos` functions for discovering, e.g., the
-# path to the Arduino firmware sketch source files.
-sys.path.append(path('.').abspath())
+import versioneer
 
 # Import project module.
 rpc_module = import_module('base_node_rpc_freertos')
-VERSION = version.getVersion()
+VERSION = versioneer.get_version()
 PROPERTIES = OrderedDict([('name', 'base-node-rpc-freertos'),
                           ('package_name', 'base-node-rpc-freertos'),
                           ('module_name', 'base_node_rpc_freertos'),
