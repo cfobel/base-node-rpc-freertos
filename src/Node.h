@@ -60,6 +60,9 @@ class Node :
 public:
   typedef PacketParser<FixedPacket> parser_t;
 
+  static const uint8_t STEP_PIN    =    46;
+  static const uint8_t DIR_PIN     =    48;
+  static const uint8_t ENABLE_PIN  =    62;
   static const uint32_t BUFFER_SIZE = 128;  // >= longest property string
 
   uint8_t buffer_[BUFFER_SIZE];
@@ -72,6 +75,9 @@ public:
            BaseNodeState<state_t>(base_node_rpc_freertos_State_fields) {
     // XXX Turn on LED by default to indicate power is on.
     pinMode(LED_BUILTIN, OUTPUT);
+    pinMode(STEP_PIN, OUTPUT);
+    pinMode(DIR_PIN, OUTPUT);
+    pinMode(ENABLE_PIN, OUTPUT);
   }
 
   UInt8Array get_buffer() { return UInt8Array_init(sizeof(buffer_), buffer_); }
@@ -127,6 +133,20 @@ public:
       default:
         return 0;
     }
+  }
+
+  uint32_t step(uint32_t count, bool clockwise, uint32_t delay_ms) {
+    digitalWrite(DIR_PIN, !clockwise);
+    digitalWrite(ENABLE_PIN, 0);
+    for (uint32_t i = 0; i < count; i++) {
+      digitalWrite(STEP_PIN, 1);
+      delay_us(delay_ms);
+      digitalWrite(STEP_PIN, 0);
+      delay_us(delay_ms);
+    }
+
+    digitalWrite(ENABLE_PIN, 1);
+    return task_high_water_mark();
   }
 
   /** Called periodically from the main program loop. */
