@@ -27,7 +27,7 @@
 
 /* ## mega2560 settings ## */
 #ifndef PACKET_SIZE
-#define PACKET_SIZE   256
+#define PACKET_SIZE   80
 #endif  // #ifndef PACKET_SIZE
 
 #ifndef I2C_PACKET_SIZE
