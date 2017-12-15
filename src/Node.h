@@ -1,6 +1,7 @@
 #ifndef ___NODE__H___
 #define ___NODE__H___
 
+#include <Arduino_FreeRTOS.h>
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
@@ -110,6 +111,10 @@ public:
 
   // # Callback methods
   void on_tick() {}
+
+  uint32_t task_high_water_mark() {
+    return uxTaskGetStackHighWaterMark(xTaskGetIdleTaskHandle());
+  }
 
   /** Called periodically from the main program loop. */
   void loop() {}
