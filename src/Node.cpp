@@ -1,5 +1,7 @@
 #include "Node.h"
 
+QueueHandle_t motor_queue;
+
 namespace base_node_rpc_freertos {
 
 void Node::begin() {

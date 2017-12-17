@@ -2,6 +2,7 @@
 #define ___NODE__H___
 
 #include <Arduino_FreeRTOS.h>
+#include <queue.h>
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
@@ -30,6 +31,7 @@
 
 extern TaskHandle_t task_blink_handle;
 extern TaskHandle_t task_serial_rx_handle;
+extern QueueHandle_t motor_queue;
 
 namespace base_node_rpc_freertos {
 
@@ -38,6 +40,17 @@ const size_t FRAME_SIZE = (3 * sizeof(uint8_t)  // Frame boundary
                            - sizeof(uint16_t)  // Payload length
                            - sizeof(uint16_t));  // CRC
 
+struct MotorConfig {
+  uint8_t STEP_PIN;
+  uint8_t DIR_PIN;
+  uint8_t ENABLE_PIN;
+};
+
+struct MoveRequest {
+  uint32_t count;
+  bool clockwise;
+  uint32_t delay_us_;
+};
 
 class Node;
 const char HARDWARE_VERSION_[] = "0.1.0";
@@ -60,9 +73,6 @@ class Node :
 public:
   typedef PacketParser<FixedPacket> parser_t;
 
-  static const uint8_t STEP_PIN    =    46;
-  static const uint8_t DIR_PIN     =    48;
-  static const uint8_t ENABLE_PIN  =    62;
   static const uint32_t BUFFER_SIZE = 128;  // >= longest property string
 
   uint8_t buffer_[BUFFER_SIZE];
@@ -75,9 +85,6 @@ public:
            BaseNodeState<state_t>(base_node_rpc_freertos_State_fields) {
     // XXX Turn on LED by default to indicate power is on.
     pinMode(LED_BUILTIN, OUTPUT);
-    pinMode(STEP_PIN, OUTPUT);
-    pinMode(DIR_PIN, OUTPUT);
-    pinMode(ENABLE_PIN, OUTPUT);
   }
 
   UInt8Array get_buffer() { return UInt8Array_init(sizeof(buffer_), buffer_); }
@@ -135,18 +142,9 @@ public:
     }
   }
 
-  uint32_t step(uint32_t count, bool clockwise, uint32_t delay_ms) {
-    digitalWrite(DIR_PIN, !clockwise);
-    digitalWrite(ENABLE_PIN, 0);
-    for (uint32_t i = 0; i < count; i++) {
-      digitalWrite(STEP_PIN, 1);
-      delay_us(delay_ms);
-      digitalWrite(STEP_PIN, 0);
-      delay_us(delay_ms);
-    }
-
-    digitalWrite(ENABLE_PIN, 1);
-    return task_high_water_mark();
+  BaseType_t step(uint32_t count, bool clockwise, uint32_t delay_us_) {
+    MoveRequest move_request = {count, clockwise, delay_us_};
+    return xQueueSend(motor_queue, (void *) &move_request, 0);
   }
 
   /** Called periodically from the main program loop. */
