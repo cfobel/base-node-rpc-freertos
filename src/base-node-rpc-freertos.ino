@@ -62,7 +62,7 @@ void setup() {
   xTaskCreate(
     TaskMotor
     ,  (const portCHAR *)"Motor"   // A name just for humans
-    ,  96  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  71  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  (void *) &motor_config
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &task_motor_handle);
