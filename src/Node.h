@@ -28,6 +28,8 @@
 #include "BaseNodeRpcFreeRtos/config_pb.h"
 #include "BaseNodeRpcFreeRtos/state_pb.h"
 
+extern TaskHandle_t task_blink_handle;
+
 namespace base_node_rpc_freertos {
 
 const size_t FRAME_SIZE = (3 * sizeof(uint8_t)  // Frame boundary
@@ -112,8 +114,16 @@ public:
   // # Callback methods
   void on_tick() {}
 
-  uint32_t task_high_water_mark() {
-    return uxTaskGetStackHighWaterMark(xTaskGetIdleTaskHandle());
+  uint32_t task_high_water_mark(uint8_t task_id) {
+    const uint8_t IDLE_TASK = 0;
+    const uint8_t BLINK_TASK = 1;
+
+    switch (task_id) {
+      case BLINK_TASK:
+        return uxTaskGetStackHighWaterMark(task_blink_handle);
+      default:
+        return uxTaskGetStackHighWaterMark(xTaskGetIdleTaskHandle());
+    }
   }
 
   /** Called periodically from the main program loop. */

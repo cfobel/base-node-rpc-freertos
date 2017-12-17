@@ -18,7 +18,8 @@
 base_node_rpc_freertos::Node node_obj;
 base_node_rpc_freertos::CommandProcessor<base_node_rpc_freertos::Node> command_processor(node_obj);
 
-// define two tasks for Blink & AnalogRead
+TaskHandle_t task_blink_handle;
+
 void TaskBlink( void *pvParameters );
 
 int available_bytes = 0;
@@ -35,7 +36,7 @@ void setup() {
     ,  64  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+    ,  &task_blink_handle);
 }
 
 void loop () {
