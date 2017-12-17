@@ -50,7 +50,7 @@
 #define configCPU_CLOCK_HZ                  ( ( uint32_t ) F_CPU )			// This F_CPU variable set by the environment
 #define configMAX_PRIORITIES                4
 #define configMINIMAL_STACK_SIZE            ( ( UBaseType_t ) 85 )
-#define configIDLE_STACK_SIZE               ( ( UBaseType_t ) 500 )
+#define configIDLE_STACK_SIZE               ( ( UBaseType_t ) 128 )
 #define configMAX_TASK_NAME_LEN             ( 8 )
 #define configUSE_TRACE_FACILITY            0
 #define configUSE_16_BIT_TICKS              1
@@ -93,8 +93,8 @@ to exclude the API function. */
 #define INCLUDE_vTaskDelayUntil                 0
 #define INCLUDE_vTaskDelay                      1
 #define INCLUDE_xTaskGetSchedulerState          0
-#define INCLUDE_xTaskGetIdleTaskHandle          1 // create an idle task handle.
-#define INCLUDE_xTaskGetCurrentTaskHandle       1
+#define INCLUDE_xTaskGetIdleTaskHandle          0 // create an idle task handle.
+#define INCLUDE_xTaskGetCurrentTaskHandle       0
 #define INCLUDE_uxTaskGetStackHighWaterMark     1
 
 #define configMAX(a,b)  ({ __typeof__ (a) _a = (a); __typeof__ (b) _b = (b); _a > _b ? _a : _b; })
