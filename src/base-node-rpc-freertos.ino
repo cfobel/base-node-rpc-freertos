@@ -38,7 +38,7 @@ extern QueueHandle_t motor_queue;
 const base_node_rpc_freertos::MotorConfig motor_config = {46, 48, 62};
 
 void setup() {
-  motor_queue = xQueueCreate(1, sizeof(MoveRequest));
+  motor_queue = xQueueCreate(4, sizeof(MoveRequest));
 
   node_obj.begin();
 
