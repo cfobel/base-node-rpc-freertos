@@ -35,7 +35,7 @@ void setup() {
   xTaskCreate(
     TaskBlink
     ,  (const portCHAR *)"Blink"   // A name just for humans
-    ,  64  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  50  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  NULL
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &task_blink_handle);
@@ -70,15 +70,19 @@ void TaskBlink(void *pvParameters)  // This is a task.
   (void) pvParameters;
 
 /*
-  Blink
-  Turns on an LED on for one second, then off for one second, repeatedly.
+  Blink an LED mimicking a heartbeat
+  (i.e., twice fast followed by a 1 second pause)
 */
 
-  // initialize digital LED_BUILTIN on pin 13 as an output.
+  // initialize digital LED_BUILTIN pin as an output.
   pinMode(LED_BUILTIN, OUTPUT);
 
   for (;;) // A Task shall never return or exit.
   {
+    digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+    vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for one second
+    digitalWrite(LED_BUILTIN, LOW);   // turn the LED on (HIGH is the voltage level)
+    vTaskDelay( 200 / portTICK_PERIOD_MS ); // wait for one second
     digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
     vTaskDelay( 100 / portTICK_PERIOD_MS ); // wait for one second
     digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
