@@ -31,6 +31,7 @@
 
 extern TaskHandle_t task_blink_handle;
 extern TaskHandle_t task_serial_rx_handle;
+extern TaskHandle_t task_motor_handle;
 extern QueueHandle_t motor_queue;
 
 namespace base_node_rpc_freertos {
@@ -131,12 +132,15 @@ public:
   uint32_t task_high_water_mark(uint8_t task_id) {
     const uint8_t BLINK_TASK = 1;
     const uint8_t SERIAL_RX_TASK = 2;
+    const uint8_t MOTOR_TASK = 3;
 
     switch (task_id) {
       case BLINK_TASK:
         return uxTaskGetStackHighWaterMark(task_blink_handle);
       case SERIAL_RX_TASK:
         return uxTaskGetStackHighWaterMark(task_serial_rx_handle);
+      case MOTOR_TASK:
+        return uxTaskGetStackHighWaterMark(task_motor_handle);
       default:
         return 0;
     }

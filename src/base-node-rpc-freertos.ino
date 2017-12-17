@@ -23,6 +23,7 @@ base_node_rpc_freertos::CommandProcessor<base_node_rpc_freertos::Node> command_p
 
 TaskHandle_t task_blink_handle;
 TaskHandle_t task_serial_rx_handle;
+TaskHandle_t task_motor_handle;
 
 void TaskBlink( void *pvParameters );
 void TaskSerialRx( void *pvParameters );
@@ -64,7 +65,7 @@ void setup() {
     ,  96  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  (void *) &motor_config
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
-    ,  NULL );
+    ,  &task_motor_handle);
 }
 
 void loop () {}
