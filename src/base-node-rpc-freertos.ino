@@ -143,6 +143,8 @@ void TaskMotor(void *pvParameters) {
       }
 
       digitalWrite(config.ENABLE_PIN, 1);
+    } else {
+        vTaskDelay(100 / portTICK_PERIOD_MS);
     }
   }
 }
