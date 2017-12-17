@@ -48,9 +48,16 @@ struct MotorConfig {
 };
 
 struct MoveRequest {
-  uint32_t count;
+  enum Type {
+    RELATIVE = 1,
+    CONTINUOUS = 2,
+    STOP = 3
+  };
+
+  Type type;
   bool clockwise;
   uint32_t delay_us_;
+  uint32_t count;
 };
 
 class Node;
@@ -147,7 +154,39 @@ public:
   }
 
   BaseType_t step(uint32_t count, bool clockwise, uint32_t delay_us_) {
-    MoveRequest move_request = {count, clockwise, delay_us_};
+    /*
+     * Move the motor the specified number of steps in the given direction.
+     *
+     * @param count
+     *     Number of steps to move.
+     * @param clockwise
+     *     If `true`, turn clockwise.
+     *     Otherwise, turn counter-clockwise.
+     * @param delay_us_
+     *     Delay between steps in microseconds.
+     */
+    MoveRequest move_request = {MoveRequest::Type::RELATIVE, clockwise, delay_us_, count};
+    return xQueueSend(motor_queue, (void *) &move_request, 0);
+  }
+
+  BaseType_t start(bool clockwise, uint32_t delay_us_) {
+    /*
+     * Start motor moving in specified direction, with the specified delay
+     * between steps.
+     *
+     * @param clockwise
+     *     If `true`, turn clockwise.
+     *     Otherwise, turn counter-clockwise.
+     * @param delay_us_
+     *     Delay between steps in microseconds.
+     */
+    MoveRequest move_request = {MoveRequest::Type::CONTINUOUS, clockwise, delay_us_, 0};
+    return xQueueSend(motor_queue, (void *) &move_request, 0);
+  }
+
+  BaseType_t stop() {
+    // Stop moving the motor.
+    MoveRequest move_request = {MoveRequest::Type::STOP, false, 0, 0};
     return xQueueSend(motor_queue, (void *) &move_request, 0);
   }
 

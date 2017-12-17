@@ -62,7 +62,7 @@ void setup() {
   xTaskCreate(
     TaskMotor
     ,  (const portCHAR *)"Motor"   // A name just for humans
-    ,  71  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  100  // This stack size can be checked & adjusted by reading the Stack Highwater
     ,  (void *) &motor_config
     ,  0  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &task_motor_handle);
@@ -109,11 +109,34 @@ void TaskBlink(void *pvParameters)  // This is a task.
   }
 }
 
+void step(const base_node_rpc_freertos::MotorConfig &config,
+          const MoveRequest &request) {
+  // Move the specified motor a single step.
+
+  digitalWrite(config.STEP_PIN, 1);
+  // Pulse maximum of 100 microseconds.
+  delayMicroseconds((100 > request.delay_us_) ? request.delay_us_ : 100);
+  digitalWrite(config.STEP_PIN, 0);
+  /* According to [here][1], the largest useful delay value for
+   * `delayMicroseconds` is 16383.
+   *
+   * As a workaround, divide specified microsecond delay by ~1000 (actually by
+   * 1024, since this can be done using a shift operation instead of actual
+   * division) and use the millisecond delay function for the result and the
+   * microsecond delay function for the remainder.
+   *
+   * [1]: https://stackoverflow.com/questions/34532941/in-arduino-is-there-a-maximum-delay-time-when-using-the-fuctiondelay/34533207#34533207
+   */
+  delay(request.delay_us_ >> 10);
+  delayMicroseconds(request.delay_us_ & 0b01111111111);
+}
+
 void TaskMotor(void *pvParameters) {
   const base_node_rpc_freertos::MotorConfig config =
     *((const base_node_rpc_freertos::MotorConfig *)pvParameters);
 
   MoveRequest request;
+  bool continuous = false;
 
   pinMode(config.STEP_PIN, OUTPUT);
   pinMode(config.DIR_PIN, OUTPUT);
@@ -121,30 +144,29 @@ void TaskMotor(void *pvParameters) {
 
   for (;;) {
     if (xQueueReceive(motor_queue, &request, 0)) {
-      digitalWrite(config.DIR_PIN, !request.clockwise);
-      digitalWrite(config.ENABLE_PIN, 0);
-      for (uint32_t i = 0; i < request.count; i++) {
-        digitalWrite(config.STEP_PIN, 1);
-        // Pulse maximum of 100 microseconds.
-        delayMicroseconds((100 > request.delay_us_) ? request.delay_us_ : 100);
-        digitalWrite(config.STEP_PIN, 0);
-        /* According to [here][1], the largest useful delay value for
-         * `delayMicroseconds` is 16383.
-         *
-         * As a workaround, divide specified microsecond delay by ~1000
-         * (actually by 1024, since this can be done using a shift operation
-         * instead of actual division) and use the millisecond delay function
-         * for the result and the microsecond delay function for the remainder.
-         *
-         * [1]: https://stackoverflow.com/questions/34532941/in-arduino-is-there-a-maximum-delay-time-when-using-the-fuctiondelay/34533207#34533207
-         */
-        delay(request.delay_us_ >> 10);
-        delayMicroseconds(request.delay_us_ & 0b01111111111);
+      if (request.type == MoveRequest::Type::RELATIVE) {
+        // Move the motor a set number of steps.
+        continuous = false;
+        digitalWrite(config.DIR_PIN, !request.clockwise);
+        digitalWrite(config.ENABLE_PIN, 0);
+        for (uint32_t i = 0; i < request.count; i++) {
+          step(config, request);
+        }
+        digitalWrite(config.ENABLE_PIN, 1);
+      } else if (request.type == MoveRequest::Type::CONTINUOUS) {
+        // Start moving the motor.
+        digitalWrite(config.DIR_PIN, !request.clockwise);
+        digitalWrite(config.ENABLE_PIN, 0);
+        continuous = true;
+      } else if (request.type == MoveRequest::Type::STOP) {
+        // Stop moving the motor.
+        continuous = false;
+        digitalWrite(config.ENABLE_PIN, 1);
       }
-
-      digitalWrite(config.ENABLE_PIN, 1);
+    } else if (continuous) {
+      step(config, request);
     } else {
-        vTaskDelay(100 / portTICK_PERIOD_MS);
+      vTaskDelay(100 / portTICK_PERIOD_MS);
     }
   }
 }
