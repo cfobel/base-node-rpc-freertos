@@ -2,6 +2,7 @@
 #define ___NODE__H___
 
 #include <Arduino_FreeRTOS.h>
+#include <queue.h>
 #include <math.h>
 #include <string.h>
 #include <stdint.h>
@@ -30,6 +31,8 @@
 
 extern TaskHandle_t task_blink_handle;
 extern TaskHandle_t task_serial_rx_handle;
+extern TaskHandle_t task_motor_handle;
+extern QueueHandle_t motor_queue;
 
 namespace base_node_rpc_freertos {
 
@@ -38,6 +41,17 @@ const size_t FRAME_SIZE = (3 * sizeof(uint8_t)  // Frame boundary
                            - sizeof(uint16_t)  // Payload length
                            - sizeof(uint16_t));  // CRC
 
+struct MotorConfig {
+  uint8_t STEP_PIN;
+  uint8_t DIR_PIN;
+  uint8_t ENABLE_PIN;
+};
+
+struct MoveRequest {
+  uint32_t count;
+  bool clockwise;
+  uint32_t delay_us_;
+};
 
 class Node;
 const char HARDWARE_VERSION_[] = "0.1.0";
@@ -118,15 +132,23 @@ public:
   uint32_t task_high_water_mark(uint8_t task_id) {
     const uint8_t BLINK_TASK = 1;
     const uint8_t SERIAL_RX_TASK = 2;
+    const uint8_t MOTOR_TASK = 3;
 
     switch (task_id) {
       case BLINK_TASK:
         return uxTaskGetStackHighWaterMark(task_blink_handle);
       case SERIAL_RX_TASK:
         return uxTaskGetStackHighWaterMark(task_serial_rx_handle);
+      case MOTOR_TASK:
+        return uxTaskGetStackHighWaterMark(task_motor_handle);
       default:
         return 0;
     }
+  }
+
+  BaseType_t step(uint32_t count, bool clockwise, uint32_t delay_us_) {
+    MoveRequest move_request = {count, clockwise, delay_us_};
+    return xQueueSend(motor_queue, (void *) &move_request, 0);
   }
 
   /** Called periodically from the main program loop. */
