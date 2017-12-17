@@ -29,6 +29,7 @@
 #include "BaseNodeRpcFreeRtos/state_pb.h"
 
 extern TaskHandle_t task_blink_handle;
+extern TaskHandle_t task_serial_rx_handle;
 
 namespace base_node_rpc_freertos {
 
@@ -115,14 +116,16 @@ public:
   void on_tick() {}
 
   uint32_t task_high_water_mark(uint8_t task_id) {
-    const uint8_t IDLE_TASK = 0;
     const uint8_t BLINK_TASK = 1;
+    const uint8_t SERIAL_RX_TASK = 2;
 
     switch (task_id) {
       case BLINK_TASK:
         return uxTaskGetStackHighWaterMark(task_blink_handle);
+      case SERIAL_RX_TASK:
+        return uxTaskGetStackHighWaterMark(task_serial_rx_handle);
       default:
-        return uxTaskGetStackHighWaterMark(xTaskGetIdleTaskHandle());
+        return 0;
     }
   }
 

@@ -19,8 +19,10 @@ base_node_rpc_freertos::Node node_obj;
 base_node_rpc_freertos::CommandProcessor<base_node_rpc_freertos::Node> command_processor(node_obj);
 
 TaskHandle_t task_blink_handle;
+TaskHandle_t task_serial_rx_handle;
 
 void TaskBlink( void *pvParameters );
+void TaskSerialRx( void *pvParameters );
 
 int available_bytes = 0;
 
@@ -37,13 +39,28 @@ void setup() {
     ,  NULL
     ,  2  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
     ,  &task_blink_handle);
+
+  xTaskCreate(
+    TaskSerialRx
+    ,  (const portCHAR *)"SerialRx"   // A name just for humans
+    ,  315  // This stack size can be checked & adjusted by reading the Stack Highwater
+    ,  NULL
+    ,  1  // Priority, with 3 (configMAX_PRIORITIES - 1) being the highest, and 0 being the lowest.
+    ,  &task_serial_rx_handle);
 }
 
-void loop () {
-  if (Serial.available()) {
-    node_obj.serial_handler_.receiver()(Serial.available());
-    if (node_obj.serial_handler_.packet_ready()) {
-      node_obj.serial_handler_.process_packet(command_processor);
+void loop () {}
+
+void TaskSerialRx(void *pvParameters) {
+  // Listen on serial port for incoming command requests.
+  for (;;) {
+    if (Serial.available()) {
+      node_obj.serial_handler_.receiver()(Serial.available());
+      if (node_obj.serial_handler_.packet_ready()) {
+        node_obj.serial_handler_.process_packet(command_processor);
+      }
+    } else {
+      vTaskDelay(1);
     }
   }
 }
